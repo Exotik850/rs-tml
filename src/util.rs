@@ -27,6 +27,7 @@ pub fn nested<'a>(
     let mut depth = 1;
     let mut i = 0;
 
+    // TODO: Optimize this to avoid searching every byte
     while i < input.len() {
         // Check for escape character
         if i > 0 && &input[i - 1..i] == "\\" {
@@ -97,13 +98,23 @@ pub(crate) mod test_util {
         expected_rest: &'a str,
     ) {
         let (rest, value) = result.unwrap();
-        assert_eq!(rest, expected_rest);
-        assert_eq!(value, expected_value);
+
+        if rest != expected_rest || value != expected_value {
+            panic!(
+                "Assertion failed:\nExpected rest: {:#?}\nActual rest:   {:#?}\nExpected value: {:?}\nActual value:   {:?}",
+                expected_rest, rest, expected_value, value
+            );
+        }
     }
 
     pub fn assert_parse_err<'a, T>(result: ParseResult<'a, T>, expected_error: ParseError<'a>) {
         let err = result.err().unwrap();
-        assert_eq!(err, expected_error);
+        if err != expected_error {
+            panic!(
+                "Assertion failed:\nExpected error: {:#?}\nActual error:   {:#?}",
+                expected_error, err
+            );
+        }
     }
 }
 

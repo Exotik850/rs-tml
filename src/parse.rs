@@ -6,6 +6,9 @@ use crate::{ParseError, ParseResult, nested};
 //
 // One-line comments start with '//' and continue to the end of the line.
 // Multi-line comments are enclosed within '/*' and '*/'.
+//
+// Currently, all comments are ignored during parsing.
+// TODO: This going to change in the future to support documentation comments.
 #[derive(Debug, PartialEq)]
 pub enum Comment<'a> {
     Line(&'a str),
@@ -68,6 +71,8 @@ pub trait RSTMLParse<'a> {
         Self: Sized;
 }
 
+/// Consumes all leading comments from the input string,
+/// as well as any leading whitespace.
 pub fn consume_comments(input: &str) -> &str {
     let mut input = input;
     loop {

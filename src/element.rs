@@ -37,6 +37,7 @@ impl<'a> RSTMLParse<'a> for Text<'a> {
     }
 }
 
+/// Generic Node enum that can represent either Text or Element
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node<'a> {
     Text(Text<'a>),
@@ -91,11 +92,11 @@ impl<'a> From<Element<'a>> for Node<'a> {
 
 impl<'a> RSTMLParse<'a> for Node<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
-        if let Ok((rest, text)) = Text::parse_no_whitespace(input) {
-            return Ok((rest, Node::Text(text)));
-        }
         if let Ok((rest, element)) = Element::parse_no_whitespace(input) {
             return Ok((rest, Node::Element(element)));
+        }
+        if let Ok((rest, text)) = Text::parse_no_whitespace(input) {
+            return Ok((rest, Node::Text(text)));
         }
         Err(crate::ParseError::invalid_input(
             input,
@@ -169,7 +170,8 @@ impl<'a> Element<'a> {
 impl<'a> RSTMLParse<'a> for Element<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
         let (rest, name) = Tag::parse_no_whitespace(input)?;
-        let (rest_out, content) = crate::nested(rest, "{", Some("}"))?;
+        let rest = consume_comments(rest);
+        let (rest_out, content) = crate::nested(rest, "{", "}")?;
         let rest = consume_comments(content);
 
         let (mut rest, attributes) = Attribute::parse_many_ignoring_comments(rest);
@@ -268,7 +270,9 @@ mod tests {
 
     #[test]
     fn test_nested_element_parse() {
-        let input = r#"div {
+        let input = r#"div
+        // Main container
+        {
             #main
             section {
                 // nested element
