@@ -133,6 +133,7 @@ pub trait RSTMLParseExt<'a>: RSTMLParse<'a> {
     }
 
     /// Parses as many items as possible, ignoring comments
+    #[must_use]
     fn parse_many_ignoring_comments(mut input: &'a str) -> (&'a str, Vec<Self>)
     where
         Self: Sized,
