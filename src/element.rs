@@ -3,9 +3,25 @@ use crate::{Attribute, ParseResult, RSTMLParse, RSTMLParseExt, Tag, parse::consu
 // Represents plain text content within RSTML
 //
 // Text content is any sequence of characters that is surrounded by quotes
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Text<'a> {
     pub content: &'a str,
+}
+
+impl<'a> Text<'a> {
+    #[must_use]
+    pub const fn new_const(content: &'a str) -> Self {
+        Text { content }
+    }
+    pub fn new(content: impl Into<&'a str>) -> Self {
+        Self::new_const(content.into())
+    }
+}
+
+impl<'a> From<&'a str> for Text<'a> {
+    fn from(value: &'a str) -> Self {
+        Text::new_const(value)
+    }
 }
 
 impl std::fmt::Display for Text<'_> {
@@ -21,10 +37,56 @@ impl<'a> RSTMLParse<'a> for Text<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node<'a> {
     Text(Text<'a>),
     Element(Element<'a>),
+}
+
+impl<'a> Node<'a> {
+    #[must_use]
+    pub const fn is_text(&self) -> bool {
+        matches!(self, Node::Text(_))
+    }
+
+    #[must_use]
+    pub const fn is_element(&self) -> bool {
+        matches!(self, Node::Element(_))
+    }
+
+    #[must_use]
+    pub const fn text_const(value: &'a str) -> Self {
+        Node::Text(Text::new_const(value))
+    }
+    pub fn text(value: impl Into<&'a str>) -> Self {
+        Self::text_const(value.into())
+    }
+
+    pub fn element(element: impl Into<Element<'a>>) -> Self {
+        Self::element_const(element.into())
+    }
+    #[must_use]
+    pub const fn element_const(element: Element<'a>) -> Self {
+        Node::Element(element)
+    }
+}
+
+impl<'a> From<&'a str> for Node<'a> {
+    fn from(value: &'a str) -> Self {
+        Node::Text(Text::new_const(value))
+    }
+}
+
+impl<'a> From<Text<'a>> for Node<'a> {
+    fn from(value: Text<'a>) -> Self {
+        Node::Text(value)
+    }
+}
+
+impl<'a> From<Element<'a>> for Node<'a> {
+    fn from(value: Element<'a>) -> Self {
+        Node::Element(value)
+    }
 }
 
 impl<'a> RSTMLParse<'a> for Node<'a> {
@@ -43,11 +105,65 @@ impl<'a> RSTMLParse<'a> for Node<'a> {
 }
 
 // Generic Element struct that can hold different types of children
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Element<'a> {
     pub name: Tag<'a>,
     pub attributes: Vec<Attribute<'a>>,
     pub children: Vec<Node<'a>>,
+}
+
+impl<'a> Element<'a> {
+    pub const EMPTY: Self = Self::empty();
+    #[must_use]
+    pub const fn empty() -> Element<'a> {
+        Element {
+            name: Tag::DIV,
+            attributes: Vec::new(),
+            children: Vec::new(),
+        }
+    }
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.attributes.is_empty() && self.children.is_empty()
+    }
+    #[must_use]
+    pub const fn new_const(name: Tag<'a>) -> Self {
+        Element {
+            name,
+            attributes: Vec::new(),
+            children: Vec::new(),
+        }
+    }
+    pub fn new(name: impl Into<Tag<'a>>) -> Self {
+        Self::new_const(name.into())
+    }
+
+    pub fn add_child(&mut self, child: impl Into<Node<'a>>) {
+        self.children.push(child.into());
+    }
+    #[must_use]
+    pub fn with_child(mut self, child: impl Into<Node<'a>>) -> Self {
+        self.add_child(child.into());
+        self
+    }
+
+    pub fn add_attribute(&mut self, attribute: Attribute<'a>) {
+        self.attributes.push(attribute);
+    }
+    #[must_use]
+    pub fn with_attribute(mut self, attribute: Attribute<'a>) -> Self {
+        self.add_attribute(attribute);
+        self
+    }
+
+    pub fn add_key_value(&mut self, key: impl Into<&'a str>, value: impl Into<&'a str>) {
+        self.add_attribute(Attribute::new(key, value));
+    }
+    #[must_use]
+    pub fn with_key_value(mut self, key: impl Into<&'a str>, value: impl Into<&'a str>) -> Self {
+        self.add_key_value(key, value);
+        self
+    }
 }
 
 impl<'a> RSTMLParse<'a> for Element<'a> {
@@ -89,9 +205,7 @@ mod tests {
         let input = r#""Hello, World!""#;
         assert_parse_eq(
             Text::parse_no_whitespace(input),
-            Text {
-                content: "Hello, World!",
-            },
+            Text::new("Hello, World!"),
             "",
         );
     }
@@ -101,9 +215,7 @@ mod tests {
         let input = r#""Sample Text""#;
         assert_parse_eq(
             Node::parse_no_whitespace(input),
-            Node::Text(Text {
-                content: "Sample Text",
-            }),
+            Node::text("Sample Text"),
             "",
         );
     }
@@ -113,15 +225,7 @@ mod tests {
         let input = r#"div {
             // No attributes or children
         }"#;
-        assert_parse_eq(
-            Element::parse_no_whitespace(input),
-            Element {
-                name: Tag::DIV,
-                attributes: vec![],
-                children: vec![],
-            },
-            "",
-        );
+        assert_parse_eq(Element::parse_no_whitespace(input), Element::EMPTY, "");
     }
 
     #[test]
@@ -129,14 +233,9 @@ mod tests {
         let input = r#"div { .class="container" "Hello" }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element {
-                name: Tag::DIV,
-                attributes: vec![Attribute {
-                    key: "class",
-                    value: "container",
-                }],
-                children: vec![Node::Text(Text { content: "Hello" })],
-            },
+            Element::new(Tag::DIV)
+                .with_key_value("class", "container")
+                .with_child("Hello"),
             "",
         );
     }
@@ -150,11 +249,7 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element {
-                name: Tag::SECTION,
-                attributes: vec![],
-                children: vec![Node::Text(Text { content: "Content" })],
-            },
+            Element::new(Tag::SECTION).with_child("Content"),
             "",
         );
     }
@@ -166,13 +261,7 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element {
-                name: Tag::SPAN,
-                attributes: vec![],
-                children: vec![Node::Text(Text {
-                    content: "No attributes here",
-                })],
-            },
+            Element::new(Tag::SPAN).with_child("No attributes here"),
             "",
         );
     }
@@ -188,20 +277,9 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element {
-                name: Tag::DIV,
-                attributes: vec![Attribute {
-                    key: "id",
-                    value: "main",
-                }],
-                children: vec![Node::Element(Element {
-                    name: Tag::SECTION,
-                    attributes: vec![],
-                    children: vec![Node::Text(Text {
-                        content: "Nested Content",
-                    })],
-                })],
-            },
+            Element::new(Tag::DIV)
+                .with_key_value("id", "main")
+                .with_child(Element::new(Tag::SECTION).with_child("Nested Content")),
             "",
         );
     }
