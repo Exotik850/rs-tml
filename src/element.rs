@@ -1,4 +1,4 @@
-use crate::{Attribute, ParseResult, RSTMLParse, RSTMLParseExt, Tag, nested};
+use crate::{Attribute, ParseResult, RSTMLParse, RSTMLParseExt, Tag, parse::consume_comments};
 
 // Represents plain text content within RSTML
 //
@@ -21,41 +21,9 @@ impl<'a> RSTMLParse<'a> for Text<'a> {
     }
 }
 
-// Represents a comment within RSTML
-//
-// Comments can be one-line or multi-line.
-//
-// One-line comments start with '//' and continue to the end of the line.
-// Multi-line comments are enclosed within '/*' and '*/'.
-#[derive(Debug, PartialEq)]
-pub enum Comment<'a> {
-    Line(&'a str),
-    Block(&'a str),
-}
-
-impl<'a> RSTMLParse<'a> for Comment<'a> {
-    fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
-        let input = input.trim_start();
-        if let Some(rest) = input.strip_prefix("//") {
-            if let Some((line, rest)) = rest.split_once('\n') {
-                return Ok((rest, Comment::Line(line)));
-            }
-            return Ok(("", Comment::Line(rest)));
-        } else if let Ok((rest, content)) = nested(input, "/*", "*/") {
-            return Ok((rest, Comment::Block(content)));
-        }
-        Err(crate::ParseError::missing_token(
-            "// or /*",
-            input,
-            std::borrow::Cow::Borrowed("Expected '//' for line comment or '/*' for block comment"),
-        ))
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Node<'a> {
     Text(Text<'a>),
-    Comment(Comment<'a>),
     Element(Element<'a>),
 }
 
@@ -63,9 +31,6 @@ impl<'a> RSTMLParse<'a> for Node<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
         if let Ok((rest, text)) = Text::parse_no_whitespace(input) {
             return Ok((rest, Node::Text(text)));
-        }
-        if let Ok((rest, comment)) = Comment::parse_no_whitespace(input) {
-            return Ok((rest, Node::Comment(comment)));
         }
         if let Ok((rest, element)) = Element::parse_no_whitespace(input) {
             return Ok((rest, Node::Element(element)));
@@ -89,13 +54,13 @@ impl<'a> RSTMLParse<'a> for Element<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
         let (rest, name) = Tag::parse_no_whitespace(input)?;
         let (rest_out, content) = crate::nested(rest, "{", Some("}"))?;
-        let rest = content.trim_start();
+        let rest = consume_comments(content);
 
-        let (mut rest, attributes) = Attribute::parse_many(rest)?;
-        rest = rest.trim_start();
+        let (mut rest, attributes) = Attribute::parse_many_ignoring_comments(rest);
+        rest = consume_comments(rest);
 
-        let (rest, children) = Node::parse_many(rest)?;
-        if !rest.trim().is_empty() {
+        let (rest, children) = Node::parse_many_ignoring_comments(rest);
+        if !consume_comments(rest).is_empty() {
             return Err(crate::ParseError::invalid_input(
                 rest,
                 Some("Unexpected content after element children".into()),
@@ -132,26 +97,6 @@ mod tests {
     }
 
     #[test]
-    fn test_comment_parse() {
-        let input = r#"// This is a line comment"#;
-        assert_parse_eq(
-            Comment::parse_no_whitespace(input),
-            Comment::Line(" This is a line comment"),
-            "",
-        );
-    }
-
-    #[test]
-    fn test_block_comment_parse() {
-        let input = r#"/* This is a block comment */"#;
-        assert_parse_eq(
-            Comment::parse_no_whitespace(input),
-            Comment::Block(" This is a block comment "),
-            "",
-        );
-    }
-
-    #[test]
     fn test_node_text_parse() {
         let input = r#""Sample Text""#;
         assert_parse_eq(
@@ -165,7 +110,9 @@ mod tests {
 
     #[test]
     fn test_empty_element_parse() {
-        let input = r#"div { }"#;
+        let input = r#"div {
+            // No attributes or children
+        }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
             Element {
@@ -198,17 +145,15 @@ mod tests {
     fn test_element_with_comment_parse() {
         let input = r#"section {
             // This is a comment
-            "Content"
+            "Content" // inline comment
+            /* Block comment */
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
             Element {
                 name: Tag::SECTION,
                 attributes: vec![],
-                children: vec![
-                    Node::Comment(Comment::Line(" This is a comment")),
-                    Node::Text(Text { content: "Content" }),
-                ],
+                children: vec![Node::Text(Text { content: "Content" })],
             },
             "",
         );
@@ -235,8 +180,9 @@ mod tests {
     #[test]
     fn test_nested_element_parse() {
         let input = r#"div {
-            .id="main"
+            #main
             section {
+                // nested element
                 "Nested Content"
             }
         }"#;

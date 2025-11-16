@@ -1,7 +1,7 @@
 mod attribute;
 pub use attribute::Attribute;
 mod element;
-pub use element::{Comment, Element, Node, Text};
+pub use element::{Element, Node, Text};
 mod tag;
 pub use tag::Tag;
 mod error;
