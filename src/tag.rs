@@ -83,7 +83,7 @@ mod tests {
         let input = "div.class#id{content}";
         assert_parse_eq(
             Tag::parse_no_whitespace(input),
-            Tag::new("div"),
+            Tag::DIV,
             ".class#id{content}",
         );
     }
