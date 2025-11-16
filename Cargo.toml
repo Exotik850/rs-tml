@@ -2,6 +2,12 @@
 name = "rs-tml"
 version = "0.1.0"
 edition = "2024"
+description = "A Rust-like markdown language processor"
+authors = ["@exotik850"]
+repository = "https://github.com/exotik850/rs-tml"
+categories = ["template-engine", "parser-implementation"]
+keywords = ["markdown", "template", "parser", "rust-like"]
+license = "MIT"
 
 [dependencies]
 pastey = "0.1.1"
