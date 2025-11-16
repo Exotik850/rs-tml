@@ -22,7 +22,7 @@ macro_rules! attribute {
         $(
             paste! {
                 pub const fn [<$attribute:lower>](value: &'a str) -> Attribute<'a> {
-                    Attribute::new(stringify!([<$attribute:lower>]), value)
+                    Attribute::new_const(stringify!([<$attribute:lower>]), value)
                 }
             }
         )*
@@ -31,14 +31,19 @@ macro_rules! attribute {
 
 impl<'a> Attribute<'a> {
     #[must_use]
-    pub const fn new(key: &'a str, value: &'a str) -> Self {
+    pub const fn new_const(key: &'a str, value: &'a str) -> Self {
         Attribute { key, value }
+    }
+    pub fn new(key: impl Into<&'a str>, value: impl Into<&'a str>) -> Self {
+        Attribute {
+            key: key.into(),
+            value: value.into(),
+        }
     }
 
     // TODO : add type attribute, but it's a reserved keyword
     attribute!(id class href src alt title style name value placeholder disabled checked readonly);
 }
-
 impl std::fmt::Display for Attribute<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}=\"{}\"", self.key, self.value)
@@ -68,7 +73,7 @@ fn get_attribute_key(key: &str) -> ParseResult<'_, &str> {
     if !key.starts_with('.') {
         return Err(crate::ParseError::invalid_input(
             key,
-            Some("Attribute key must start with a period".into()),
+            Some("Attribute key must start with a period or a '#'".into()),
         ));
     }
     let key = &key[1..]; // Remove the leading period
@@ -92,81 +97,76 @@ impl<'a> RSTMLParse<'a> for Attribute<'a> {
                     Some("Invalid id format".into()),
                 ));
             };
-            return Ok((
-                rest,
-                Attribute {
-                    key: "id",
-                    value: id.name,
-                },
-            ));
+            return Ok((rest, Attribute::id(id.name)));
         }
 
         let Some((key, rest)) = input.split_once('=') else {
             // Handle case where attribute has no value, treat as class with value of key name
             // e.g., .class becomes .class="class"
-            return get_attribute_key(input).map(|(rest, key)| {
-                (
-                    rest,
-                    Attribute {
-                        key: "class",
-                        value: key,
-                    },
-                )
-            });
+            return get_attribute_key(input).map(|(rest, key)| (rest, Attribute::class(key)));
         };
-        let (rest, value) = crate::quote_nested(rest.trim_start())?;
         let (_, key) = get_attribute_key(key.trim_end())?;
-        Ok((rest, Attribute { key, value }))
+        let (rest, value) = crate::quote_nested(rest.trim_start())?;
+        Ok((rest, Attribute::new(key, value)))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::RSTMLParseExt;
-
     use super::*;
+    use crate::RSTMLParseExt;
+    use crate::test_util::*;
 
     #[test]
     fn test_attribute_parse() {
         let input = r#".class="my-class" .id="element-id""#;
-        let (rest, attr1) = Attribute::parse_no_whitespace(input).unwrap();
-        assert_eq!(attr1.key, "class");
-        assert_eq!(attr1.value, "my-class");
+        assert_parse_eq(
+            Attribute::parse_no_whitespace(input),
+            Attribute::class("my-class"),
+            r#" .id="element-id""#,
+        );
 
-        let (rest, attr2) = Attribute::parse(rest).unwrap();
-        assert_eq!(attr2.key, "id");
-        assert_eq!(attr2.value, "element-id");
-
-        assert!(rest.trim().is_empty());
+        assert_parse_eq(
+            Attribute::parse(r#" .id="element-id""#),
+            Attribute::id("element-id"),
+            "",
+        );
     }
 
     #[test]
     fn test_attribute_parse_no_value() {
         let input = r#".disabled .readonly"#;
-        let (rest, attr1) = Attribute::parse_no_whitespace(input).unwrap();
-        assert_eq!(attr1.key, "class");
-        assert_eq!(attr1.value, "disabled");
-
-        let (rest, attr2) = Attribute::parse(rest).unwrap();
-        assert_eq!(attr2.key, "class");
-        assert_eq!(attr2.value, "readonly");
-
-        assert!(rest.trim().is_empty());
+        assert_parse_eq(
+            Attribute::parse_no_whitespace(input),
+            Attribute::class("disabled"),
+            r#" .readonly"#,
+        );
+        assert_parse_eq(
+            Attribute::parse(r#" .readonly"#),
+            Attribute::class("readonly"),
+            "",
+        );
     }
 
     #[test]
     fn test_id_parse() {
         let input = r#"#unique-id"#;
-        let (rest, attr) = Attribute::parse_no_whitespace(input).unwrap();
-        assert_eq!(attr.key, "id");
-        assert_eq!(attr.value, "unique-id");
-        assert!(rest.trim().is_empty());
+        assert_parse_eq(
+            Attribute::parse_no_whitespace(input),
+            Attribute::id("unique-id"),
+            "",
+        );
     }
 
     #[test]
     fn test_attribute_parse_invalid() {
         let input = r#"class=my-class"#;
-        let result = Attribute::parse_no_whitespace(input);
-        assert!(result.is_err());
+        assert_parse_err(
+            Attribute::parse_no_whitespace(input),
+            crate::ParseError::invalid_input(
+                "class",
+                Some("Attribute key must start with a period or a '#'".into()),
+            ),
+        );
     }
 }
