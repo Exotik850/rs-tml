@@ -36,3 +36,34 @@ impl<'a> RSTMLParse<'a> for Text<'a> {
         Ok((rest, Text { content }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{parse::RSTMLParse, test_util::assert_parse_eq};
+
+    use super::Text;
+
+    #[test]
+    fn test_text_parse() {
+        let input = r#""Hello, World!""#;
+        assert_parse_eq(
+            Text::parse_no_whitespace(input),
+            Text::new("Hello, World!"),
+            "",
+        );
+    }
+
+    #[test]
+    fn test_text_no_quotes_invalid() {
+        let input = r#"Hello, World!"#;
+        let result = Text::parse_no_whitespace(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_missing_closing_quote() {
+        let input = r#""Hello, World!"#;
+        let result = Text::parse_no_whitespace(input);
+        assert!(result.is_err());
+    }
+}

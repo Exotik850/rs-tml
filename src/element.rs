@@ -169,16 +169,6 @@ mod tests {
     use crate::util::test_util::assert_parse_eq;
 
     #[test]
-    fn test_text_parse() {
-        let input = r#""Hello, World!""#;
-        assert_parse_eq(
-            Text::parse_no_whitespace(input),
-            Text::new("Hello, World!"),
-            "",
-        );
-    }
-
-    #[test]
     fn test_node_text_parse() {
         let input = r#""Sample Text""#;
         assert_parse_eq(
