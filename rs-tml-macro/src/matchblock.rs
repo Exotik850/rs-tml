@@ -55,7 +55,7 @@ pub struct RSTMLMatch {
 impl Parse for RSTMLMatch {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let match_token = input.parse::<syn::Token![match]>()?;
-        let expression: Expr = Expr::parse_without_eager_brace(input)?;
+        let expression = Expr::parse_without_eager_brace(input)?;
         let content;
         syn::braced!(content in input);
         let mut arms = Vec::new();
