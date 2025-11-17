@@ -74,7 +74,7 @@ pub trait RSTMLParse<'a> {
 
 /// Consumes all leading comments from the input string,
 /// as well as any leading whitespace.
-#[must_use] 
+#[must_use]
 pub fn consume_comments(input: &str) -> &str {
     let mut input = input;
     loop {

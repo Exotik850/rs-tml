@@ -80,16 +80,16 @@ impl Parse for AttributeValue {
 /// Attribute for RSTML Elements
 ///
 /// Examples:
-/// .title = "Hello World"          // KeyValue with static key and static value
-/// .data-id = some_variable        // KeyValue with static key and dynamic value
-/// .*dynamic_key = "Static Value"  // KeyValue with dynamic key and static value
-/// .*dynamic_key = dynamic_value   // KeyValue with dynamic key and dynamic value
-/// .*(expr) = expr                 // KeyValue with dynamic key and dynamic value
-/// #id                             // KeyOnly with static key (id shorthand)
-/// #*(expr)                        // KeyOnly with dynamic key (id shorthand)
-/// .disabled                       // KeyOnly with static key (class shorthand)
-/// .*dynamic_key                   // KeyOnly with dynamic key (class shorthand)
-/// ..*attrs                        // KeySpread with dynamic key
+/// .title = "Hello World"          // `KeyValue` with static key and static value
+/// .data-id = `some_variable`        // `KeyValue` with static key and dynamic value
+/// .*`dynamic_key` = "Static Value"  // `KeyValue` with dynamic key and static value
+/// .*`dynamic_key` = `dynamic_value`   // `KeyValue` with dynamic key and dynamic value
+/// .*(expr) = expr                 // `KeyValue` with dynamic key and dynamic value
+/// #id                             // `KeyOnly` with static key (id shorthand)
+/// #*(expr)                        // `KeyOnly` with dynamic key (id shorthand)
+/// .disabled                       // `KeyOnly` with static key (class shorthand)
+/// .*`dynamic_key`                   // `KeyOnly` with dynamic key (class shorthand)
+/// ..*attrs                        // `KeySpread` with dynamic key
 pub enum Attribute {
     KeyValue {
         key: AttributeKey,

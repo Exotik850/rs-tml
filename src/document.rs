@@ -43,7 +43,6 @@ impl<'a> Document<'a> {
         self.add_children(children);
         self
     }
-
 }
 
 impl<'a> RSTMLParse<'a> for Document<'a> {

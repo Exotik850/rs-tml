@@ -24,7 +24,7 @@ macro_rules! attribute {
             paste! {
                 pub const fn [<$attribute:lower>](value: &'a str) -> Attribute<'a> {
                     Attribute::new_const(
-                      Cow::Borrowed(stringify!([<$attribute:lower>])), 
+                      Cow::Borrowed(stringify!([<$attribute:lower>])),
                       Cow::Borrowed(value)
                     )
                 }

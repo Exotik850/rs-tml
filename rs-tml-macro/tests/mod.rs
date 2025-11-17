@@ -1,4 +1,4 @@
-use rs_tml::element::{element, Node};
+use rs_tml::element::{Node, element};
 use rs_tml_macro::rstml;
 #[test]
 fn test_empty() {
@@ -104,10 +104,7 @@ fn test_id_attribute_shorthand() {
 
 #[test]
 fn test_attribute_spread() {
-    let attrs = vec![
-        ("class", "btn"),
-        ("id", "submit-button"),
-    ];
+    let attrs = vec![("class", "btn"), ("id", "submit-button")];
     let document = rstml! {
         button {
             ..attrs

@@ -20,7 +20,7 @@ impl<'a> Text<'a> {
     }
 }
 
-impl<'a> From<String> for Text<'a> {
+impl From<String> for Text<'_> {
     fn from(value: String) -> Self {
         Text::new_const(value.into())
     }

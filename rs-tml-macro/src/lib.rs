@@ -88,23 +88,19 @@ fn is_fmt_string(input: &str) -> bool {
                 if next_c == '{' {
                     chars.next(); // Skip escaped '{'
                     continue;
-                } else {
-                    return true; // Found unescaped '{'
                 }
-            } else {
-                return true; // Found unescaped '{' at end
+                return true; // Found unescaped '{'
             }
+            return true; // Found unescaped '{' at end
         } else if c == '}' {
             if let Some(&next_c) = chars.peek() {
                 if next_c == '}' {
                     chars.next(); // Skip escaped '}'
                     continue;
-                } else {
-                    return true; // Found unescaped '}'
                 }
-            } else {
-                return true; // Found unescaped '}' at end
+                return true; // Found unescaped '}'
             }
+            return true; // Found unescaped '}' at end
         }
     }
     false

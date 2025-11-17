@@ -12,8 +12,8 @@ pub enum Node<'a> {
 impl std::fmt::Debug for Node<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Node::Text(text) => write!(f, "{:?}", text),
-            Node::Element(element) => write!(f, "{:?}", element),
+            Node::Text(text) => write!(f, "{text:?}"),
+            Node::Element(element) => write!(f, "{element:?}"),
         }
     }
 }
@@ -44,12 +44,13 @@ impl<'a> Node<'a> {
         Node::Element(element)
     }
 
+    #[must_use] 
     pub fn into_node(self) -> Self {
         self
     }
 }
 
-impl<'a> From<String> for Node<'a> {
+impl From<String> for Node<'_> {
     fn from(value: String) -> Self {
         Node::Text(Text::new(value))
     }
@@ -191,6 +192,7 @@ impl<'a> Element<'a> {
         self
     }
 
+    #[must_use] 
     pub fn into_node(self) -> Node<'a> {
         Node::Element(self)
     }
