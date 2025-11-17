@@ -1,4 +1,4 @@
-use crate::{Node, RSTMLParse, RSTMLParseExt};
+use crate::prelude::*;
 
 /// Represents an entire RSTML document.
 #[derive(Debug, Clone, PartialEq)]
@@ -29,7 +29,7 @@ impl<'a> Document<'a> {
 }
 
 impl<'a> RSTMLParse<'a> for Document<'a> {
-    fn parse_no_whitespace(input: &'a str) -> crate::ParseResult<'a, Self>
+    fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -40,8 +40,8 @@ impl<'a> RSTMLParse<'a> for Document<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::prelude::*;
     use crate::test_util::*;
-    use crate::{Document, RSTMLParse, element};
 
     #[test]
     fn test_document_parse() {

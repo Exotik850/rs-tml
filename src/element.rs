@@ -1,41 +1,4 @@
-use crate::{Attribute, ParseResult, RSTMLParse, RSTMLParseExt, Tag, parse::consume_comments};
-
-// Represents plain text content within RSTML
-//
-// Text content is any sequence of characters that is surrounded by quotes
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub struct Text<'a> {
-    pub content: &'a str,
-}
-
-impl<'a> Text<'a> {
-    #[must_use]
-    pub const fn new_const(content: &'a str) -> Self {
-        Text { content }
-    }
-    pub fn new(content: impl Into<&'a str>) -> Self {
-        Self::new_const(content.into())
-    }
-}
-
-impl<'a> From<&'a str> for Text<'a> {
-    fn from(value: &'a str) -> Self {
-        Text::new_const(value)
-    }
-}
-
-impl std::fmt::Display for Text<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.content)
-    }
-}
-
-impl<'a> RSTMLParse<'a> for Text<'a> {
-    fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
-        let (rest, content) = crate::quote_nested(input)?;
-        Ok((rest, Text { content }))
-    }
-}
+use crate::{parse::consume_comments, prelude::*};
 
 /// Generic Node enum that can represent either Text or Element
 #[derive(Debug, PartialEq, Clone)]
@@ -98,7 +61,7 @@ impl<'a> RSTMLParse<'a> for Node<'a> {
         if let Ok((rest, text)) = Text::parse_no_whitespace(input) {
             return Ok((rest, Node::Text(text)));
         }
-        Err(crate::ParseError::invalid_input(
+        Err(ParseError::invalid_input(
             input,
             std::borrow::Cow::Borrowed("Cannot find Node type"),
         ))
@@ -179,7 +142,7 @@ impl<'a> RSTMLParse<'a> for Element<'a> {
 
         let (rest, children) = Node::parse_many_ignoring_comments(rest);
         if !consume_comments(rest).is_empty() {
-            return Err(crate::ParseError::invalid_input(
+            return Err(ParseError::invalid_input(
                 rest,
                 Some("Unexpected content after element children".into()),
             ));
@@ -202,8 +165,7 @@ pub fn element<'a>(name: impl Into<Tag<'a>>) -> Element<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::Tag;
+    use crate::prelude::*;
     use crate::util::test_util::assert_parse_eq;
 
     #[test]

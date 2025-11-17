@@ -1,4 +1,5 @@
-use crate::{ParseError, ParseResult, nested};
+use crate::prelude::*;
+use crate::util::nested;
 
 // Represents a comment within RSTML
 //
@@ -26,7 +27,7 @@ impl<'a> RSTMLParse<'a> for Comment<'a> {
         } else if let Ok((rest, content)) = nested(input, "/*", "*/") {
             return Ok((rest, Comment::Block(content)));
         }
-        Err(crate::ParseError::missing_token(
+        Err(crate::error::ParseError::missing_token(
             "// or /*",
             input,
             std::borrow::Cow::Borrowed("Expected '//' for line comment or '/*' for block comment"),
@@ -73,6 +74,7 @@ pub trait RSTMLParse<'a> {
 
 /// Consumes all leading comments from the input string,
 /// as well as any leading whitespace.
+#[must_use] 
 pub fn consume_comments(input: &str) -> &str {
     let mut input = input;
     loop {

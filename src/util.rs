@@ -1,4 +1,4 @@
-use crate::{ParseError, ParseResult};
+use crate::error::{ParseError, ParseResult};
 
 // Parses nested content within delimiters
 //
@@ -121,7 +121,7 @@ pub(crate) mod test_util {
 #[cfg(test)]
 mod tests {
     use super::test_util::*;
-    use crate::ParseError;
+    use crate::error::ParseError;
 
     #[test]
     fn test_nested() {

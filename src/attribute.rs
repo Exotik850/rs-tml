@@ -1,6 +1,5 @@
+use crate::prelude::*;
 use pastey::paste;
-
-use crate::{ParseResult, RSTMLParse, Tag};
 
 /// Represents an RSTML attribute
 ///
@@ -64,21 +63,21 @@ impl<'a> From<Attribute<'a>> for (&'a str, &'a str) {
 
 fn get_attribute_key(key: &str) -> ParseResult<'_, &str> {
     if key.is_empty() {
-        return Err(crate::ParseError::missing_token(
+        return Err(ParseError::missing_token(
             ".[name]",
             key,
             Some("Attribute key cannot be empty".into()),
         ));
     }
     if !key.starts_with('.') {
-        return Err(crate::ParseError::invalid_input(
+        return Err(ParseError::invalid_input(
             key,
             Some("Attribute key must start with a period or a '#'".into()),
         ));
     }
     let key = &key[1..]; // Remove the leading period
     let Ok((rest, key)) = Tag::parse_no_whitespace(key) else {
-        return Err(crate::ParseError::invalid_input(
+        return Err(ParseError::invalid_input(
             key,
             Some("Invalid attribute key format".into()),
         ));
@@ -92,7 +91,7 @@ impl<'a> RSTMLParse<'a> for Attribute<'a> {
         if let Some(id_value) = input.strip_prefix('#') {
             // Remove the leading #
             let Ok((rest, id)) = Tag::parse_no_whitespace(id_value) else {
-                return Err(crate::ParseError::invalid_input(
+                return Err(ParseError::invalid_input(
                     input,
                     Some("Invalid id format".into()),
                 ));
@@ -113,8 +112,7 @@ impl<'a> RSTMLParse<'a> for Attribute<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::RSTMLParseExt;
+    use crate::prelude::*;
     use crate::test_util::*;
 
     #[test]
@@ -163,7 +161,7 @@ mod tests {
         let input = r#"class=my-class"#;
         assert_parse_err(
             Attribute::parse_no_whitespace(input),
-            crate::ParseError::invalid_input(
+            ParseError::invalid_input(
                 "class",
                 Some("Attribute key must start with a period or a '#'".into()),
             ),

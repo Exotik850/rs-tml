@@ -1,24 +1,29 @@
-mod attribute;
-pub use attribute::Attribute;
-mod document;
-pub use document::Document;
-mod element;
-pub use element::{Element, Node, Text, element};
-mod tag;
-pub use tag::Tag;
-mod error;
-pub use error::{ParseError, ParseResult};
-mod parse;
-pub use parse::{RSTMLParse, RSTMLParseExt};
+pub mod attribute;
+pub mod document;
+pub mod element;
+pub mod error;
+pub mod parse;
+pub mod tag;
+pub mod text;
 mod util;
 #[cfg(test)]
 pub(crate) use util::test_util;
 pub(crate) use util::{nested, quote_nested};
 
+pub mod prelude {
+    use super::{attribute, document, element, error, parse, tag, text};
+    pub use attribute::Attribute;
+    pub use document::Document;
+    pub use element::{Element, Node, element};
+    pub use error::{ParseError, ParseResult};
+    pub use parse::{RSTMLParse, RSTMLParseExt};
+    pub use tag::Tag;
+    pub use text::Text;
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::RSTMLParseExt;
-
+    use crate::prelude::*;
     #[test]
     fn test_large_document() {
         let input = r#"
@@ -50,6 +55,6 @@ mod tests {
                   line
                   comments should too */
                   "#;
-        assert!(crate::Document::parse_ignoring_comments(input).is_ok());
+        assert!(Document::parse_ignoring_comments(input).is_ok());
     }
 }

@@ -1,6 +1,5 @@
+use crate::{error::ParseResult, parse::RSTMLParse};
 use pastey::paste;
-
-use crate::{ParseResult, RSTMLParse};
 
 // Represents an RSTML tag
 //
@@ -66,7 +65,7 @@ impl<'a> RSTMLParse<'a> for Tag<'a> {
         let (name, rest) = split_exclusive_once(input, |c| !(c.is_alphanumeric() || c == '-'))
             .unwrap_or((input, ""));
         if name.is_empty() {
-            return Err(crate::ParseError::EmptyInput);
+            return Err(crate::error::ParseError::EmptyInput);
         }
         Ok((rest, Tag::new(name)))
     }
@@ -75,8 +74,9 @@ impl<'a> RSTMLParse<'a> for Tag<'a> {
 #[cfg(test)]
 mod tests {
     use super::Tag;
+    use crate::error::ParseError;
+    use crate::parse::RSTMLParse;
     use crate::test_util::*;
-    use crate::{ParseError, RSTMLParse};
 
     #[test]
     fn test_tag_parse() {
