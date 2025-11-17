@@ -3,7 +3,7 @@ pub use attribute::Attribute;
 mod document;
 pub use document::Document;
 mod element;
-pub use element::{Element, Node, Text};
+pub use element::{Element, Node, Text, element};
 mod tag;
 pub use tag::Tag;
 mod error;

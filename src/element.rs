@@ -196,6 +196,10 @@ impl<'a> RSTMLParse<'a> for Element<'a> {
     }
 }
 
+pub fn element<'a>(name: impl Into<Tag<'a>>) -> Element<'a> {
+    Element::new(name)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,7 +239,7 @@ mod tests {
         let input = r#"div { .class="container" "Hello" }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element::new(Tag::DIV)
+            element(Tag::DIV)
                 .with_key_value("class", "container")
                 .with_child("Hello"),
             "",
@@ -251,7 +255,7 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element::new(Tag::SECTION).with_child("Content"),
+            element(Tag::SECTION).with_child("Content"),
             "",
         );
     }
@@ -263,7 +267,7 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element::new(Tag::SPAN).with_child("No attributes here"),
+            element(Tag::SPAN).with_child("No attributes here"),
             "",
         );
     }
@@ -281,9 +285,9 @@ mod tests {
         }"#;
         assert_parse_eq(
             Element::parse_no_whitespace(input),
-            Element::new(Tag::DIV)
+            element(Tag::DIV)
                 .with_key_value("id", "main")
-                .with_child(Element::new(Tag::SECTION).with_child("Nested Content")),
+                .with_child(element(Tag::SECTION).with_child("Nested Content")),
             "",
         );
     }
