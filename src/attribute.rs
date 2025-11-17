@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::prelude::*;
 use pastey::paste;
 
@@ -10,10 +12,10 @@ use pastey::paste;
 /// Values are usually enclosed in double quotes.
 ///
 /// Keys without values are treated as class attributes with the value of the key name.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Attribute<'a> {
-    pub key: &'a str,
-    pub value: &'a str,
+    pub key: Cow<'a, str>,
+    pub value: Cow<'a, str>,
 }
 
 macro_rules! attribute {
@@ -21,7 +23,10 @@ macro_rules! attribute {
         $(
             paste! {
                 pub const fn [<$attribute:lower>](value: &'a str) -> Attribute<'a> {
-                    Attribute::new_const(stringify!([<$attribute:lower>]), value)
+                    Attribute::new_const(
+                      Cow::Borrowed(stringify!([<$attribute:lower>])), 
+                      Cow::Borrowed(value)
+                    )
                 }
             }
         )*
@@ -30,10 +35,10 @@ macro_rules! attribute {
 
 impl<'a> Attribute<'a> {
     #[must_use]
-    pub const fn new_const(key: &'a str, value: &'a str) -> Self {
+    pub const fn new_const(key: Cow<'a, str>, value: Cow<'a, str>) -> Self {
         Attribute { key, value }
     }
-    pub fn new(key: impl Into<&'a str>, value: impl Into<&'a str>) -> Self {
+    pub fn new(key: impl Into<Cow<'a, str>>, value: impl Into<Cow<'a, str>>) -> Self {
         Attribute {
             key: key.into(),
             value: value.into(),
@@ -49,15 +54,13 @@ impl std::fmt::Display for Attribute<'_> {
     }
 }
 
-impl<'a> From<(&'a str, &'a str)> for Attribute<'a> {
-    fn from((key, value): (&'a str, &'a str)) -> Self {
+impl<'a, T, U> From<(T, U)> for Attribute<'a>
+where
+    T: Into<Cow<'a, str>>,
+    U: Into<Cow<'a, str>>,
+{
+    fn from((key, value): (T, U)) -> Self {
         Attribute::new(key, value)
-    }
-}
-
-impl<'a> From<Attribute<'a>> for (&'a str, &'a str) {
-    fn from(attr: Attribute<'a>) -> Self {
-        (attr.key, attr.value)
     }
 }
 

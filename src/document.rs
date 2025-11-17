@@ -26,6 +26,24 @@ impl<'a> Document<'a> {
         self.add_child(child);
         self
     }
+
+    pub fn add_children<I>(&mut self, children: I)
+    where
+        I: IntoIterator<Item: Into<Node<'a>>>,
+    {
+        for child in children {
+            self.add_child(child);
+        }
+    }
+    #[must_use]
+    pub fn with_children<I>(mut self, children: I) -> Self
+    where
+        I: IntoIterator<Item: Into<Node<'a>>>,
+    {
+        self.add_children(children);
+        self
+    }
+
 }
 
 impl<'a> RSTMLParse<'a> for Document<'a> {
@@ -33,8 +51,8 @@ impl<'a> RSTMLParse<'a> for Document<'a> {
     where
         Self: Sized,
     {
-        let (rest, nodes) = Node::parse_many_ignoring_comments(input);
-        Ok((rest, Document { children: nodes }))
+        let (rest, children) = Node::parse_many_ignoring_comments(input);
+        Ok((rest, Document { children }))
     }
 }
 

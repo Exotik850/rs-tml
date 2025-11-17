@@ -55,6 +55,6 @@ mod tests {
                   line
                   comments should too */
                   "#;
-        assert!(Document::parse_ignoring_comments(input).is_ok());
+        assert!(dbg!(Document::parse_ignoring_comments(input)).is_ok());
     }
 }

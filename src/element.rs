@@ -1,10 +1,21 @@
+use std::borrow::Cow;
+
 use crate::{parse::consume_comments, prelude::*};
 
 /// Generic Node enum that can represent either Text or Element
-#[derive(Debug, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum Node<'a> {
     Text(Text<'a>),
     Element(Element<'a>),
+}
+
+impl std::fmt::Debug for Node<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Node::Text(text) => write!(f, "{:?}", text),
+            Node::Element(element) => write!(f, "{:?}", element),
+        }
+    }
 }
 
 impl<'a> Node<'a> {
@@ -17,12 +28,11 @@ impl<'a> Node<'a> {
     pub const fn is_element(&self) -> bool {
         matches!(self, Node::Element(_))
     }
-
     #[must_use]
-    pub const fn text_const(value: &'a str) -> Self {
+    pub const fn text_const(value: Cow<'a, str>) -> Self {
         Node::Text(Text::new_const(value))
     }
-    pub fn text(value: impl Into<&'a str>) -> Self {
+    pub fn text(value: impl Into<Cow<'a, str>>) -> Self {
         Self::text_const(value.into())
     }
 
@@ -33,11 +43,21 @@ impl<'a> Node<'a> {
     pub const fn element_const(element: Element<'a>) -> Self {
         Node::Element(element)
     }
+
+    pub fn into_node(self) -> Self {
+        self
+    }
+}
+
+impl<'a> From<String> for Node<'a> {
+    fn from(value: String) -> Self {
+        Node::Text(Text::new(value))
+    }
 }
 
 impl<'a> From<&'a str> for Node<'a> {
     fn from(value: &'a str) -> Self {
-        Node::Text(Text::new_const(value))
+        Node::Text(Text::new(value))
     }
 }
 
@@ -111,6 +131,23 @@ impl<'a> Element<'a> {
         self
     }
 
+    pub fn add_children<I>(&mut self, children: I)
+    where
+        I: IntoIterator<Item: Into<Node<'a>>>,
+    {
+        for child in children {
+            self.add_child(child);
+        }
+    }
+    #[must_use]
+    pub fn with_children<I>(mut self, children: I) -> Self
+    where
+        I: IntoIterator<Item: Into<Node<'a>>>,
+    {
+        self.add_children(children);
+        self
+    }
+
     pub fn add_attribute(&mut self, attribute: Attribute<'a>) {
         self.attributes.push(attribute);
     }
@@ -120,13 +157,42 @@ impl<'a> Element<'a> {
         self
     }
 
-    pub fn add_key_value(&mut self, key: impl Into<&'a str>, value: impl Into<&'a str>) {
+    pub fn add_key_value(&mut self, key: impl Into<Cow<'a, str>>, value: impl Into<Cow<'a, str>>) {
         self.add_attribute(Attribute::new(key, value));
     }
     #[must_use]
-    pub fn with_key_value(mut self, key: impl Into<&'a str>, value: impl Into<&'a str>) -> Self {
+    pub fn with_key_value(
+        mut self,
+        key: impl Into<Cow<'a, str>>,
+        value: impl Into<Cow<'a, str>>,
+    ) -> Self {
         self.add_key_value(key, value);
         self
+    }
+
+    pub fn add_key_values<I, K, V>(&mut self, key_values: I)
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: Into<Cow<'a, str>>,
+        V: Into<Cow<'a, str>>,
+    {
+        for (key, value) in key_values {
+            self.add_key_value(key, value);
+        }
+    }
+    #[must_use]
+    pub fn with_key_values<I, K, V>(mut self, key_values: I) -> Self
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: Into<Cow<'a, str>>,
+        V: Into<Cow<'a, str>>,
+    {
+        self.add_key_values(key_values);
+        self
+    }
+
+    pub fn into_node(self) -> Node<'a> {
+        Node::Element(self)
     }
 }
 

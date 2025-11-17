@@ -11,3 +11,10 @@ license = "MIT"
 
 [dependencies]
 pastey = "0.1.1"
+
+[features]
+
+[workspace]
+members = [
+    "rs-tml-macro",
+]
