@@ -35,10 +35,10 @@ impl ToTokens for Element {
         let name = &self.name;
         let attrs = self.attributes.iter().map(ToTokens::to_token_stream);
         let children = self.children.iter().map(ToTokens::to_token_stream);
-        tokens.extend(quote::quote! {{
+        tokens.extend(quote::quote! {
             ::rs_tml::element::Element::new(stringify!(#name))
             #(#attrs)*
             #(.with_child({#children}))*
-        }});
+        });
     }
 }
