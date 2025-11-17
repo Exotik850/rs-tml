@@ -136,8 +136,8 @@ impl quote::ToTokens for Attribute {
                     _ => unreachable!("ID shorthand cannot be used with key-value attributes"),
                 };
                 let value_tokens = match value {
-                    AttributeValue::Static(lit) => quote::quote! { stringify!(#lit) },
-                    AttributeValue::Dynamic(expr) => quote::quote! { (#expr) },
+                    AttributeValue::Static(lit) => quote::quote! { #lit },
+                    AttributeValue::Dynamic(expr) => quote::quote! { #expr },
                 };
                 tokens.extend(quote::quote! {
                     .with_key_value(#key_tokens, #value_tokens)

@@ -145,7 +145,7 @@ fn test_dynamic_attribute_value() {
     let attr_value = "dynamic-value";
     let document = rstml! {
         div {
-            .data-attr = (attr_value)
+            .data-attr = attr_value
             "Content"
         }
     };
