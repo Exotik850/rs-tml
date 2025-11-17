@@ -1,0 +1,14 @@
+[package]
+name = "rs-tml-macro"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pastey = "0.1"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = {version = "2.0", features = ["full", "parsing"]}
+rs-tml = { version = "0.1.0", path = "../" }
+
+[lib]
+proc-macro = true

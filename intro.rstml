@@ -1,9 +1,6 @@
-let child = todo!(); // something else to be a child
-let name = "FirstName";
-
 div {
    // specific styles can be added like so
-   // only one style block per element
+   // style blocks are combined into a single style
    style {
       .padding = "1rem"
       .background-color = "blue"
@@ -41,8 +38,8 @@ div {
    .*name = "Tony"
    .*(expr) = "Runtime name {expr}" // format!
    // expand (T: Display, U: Display) iterator
-   ..*attrs
-   ..*(expr)
+   ..attrs
+   ..(expr)
 
    // match statement
    match expr {

@@ -27,20 +27,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "rs-tml"
-version = "0.1.0"
-dependencies = [
- "pastey",
-]
-
-[[package]]
 name = "rs-tml-macro"
 version = "0.1.0"
 dependencies = [
  "pastey",
  "proc-macro2",
  "quote",
- "rs-tml",
  "syn",
 ]
 
