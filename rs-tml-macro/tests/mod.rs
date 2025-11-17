@@ -125,7 +125,7 @@ fn test_dynamic_attribute_key() {
     let attr_name = "data-info";
     let document = rstml! {
         div {
-            .*(attr_name) = "some data"
+            .*attr_name = "some data"
             "Content"
         }
     };

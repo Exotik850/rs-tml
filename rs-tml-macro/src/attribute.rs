@@ -1,3 +1,4 @@
+use quote::ToTokens;
 use syn::{Expr, Ident, LitStr, Token, parse::Parse};
 
 pub enum AttributeKey {
@@ -41,7 +42,9 @@ impl Parse for AttributeKey {
                 syn::braced!(content in input);
                 Expr::parse_without_eager_brace(&content)?
             } else {
-                return Err(input.error("Expected '(' or '{' after '.*' attribute shorthand"));
+                // Fallback: parse as Ident and convert to Expr
+                let ident: Ident = input.parse()?;
+                Expr::Verbatim(ident.into_token_stream())
             };
             if is_class {
                 AttributeKey::Dynamic(expr)
@@ -95,10 +98,10 @@ pub enum Attribute {
         key: AttributeKey,
         value: AttributeValue,
     },
-    KeyOnly {
+    Key {
         key: AttributeKey,
     },
-    KeySpread {
+    Spread {
         key: Expr,
     },
 }
@@ -110,12 +113,12 @@ impl Parse for Attribute {
             input.parse::<Token![.]>()?;
             input.parse::<Token![.]>()?;
             let key = Expr::parse_without_eager_brace(input)?;
-            return Ok(Attribute::KeySpread { key });
+            return Ok(Attribute::Spread { key });
         }
 
         let key = input.parse()?;
         if !input.peek(Token![=]) {
-            return Ok(Attribute::KeyOnly { key });
+            return Ok(Attribute::Key { key });
         }
         if matches!(key, AttributeKey::StaticId(_) | AttributeKey::DynamicId(_)) {
             return Err(input.error("ID shorthand cannot be used with key-value attributes"));
@@ -132,7 +135,7 @@ impl quote::ToTokens for Attribute {
             Attribute::KeyValue { key, value } => {
                 let key_tokens = match key {
                     AttributeKey::Static(name) => quote::quote! { #name },
-                    AttributeKey::Dynamic(expr) => quote::quote! { (#expr) },
+                    AttributeKey::Dynamic(expr) => quote::quote! { #expr },
                     _ => unreachable!("ID shorthand cannot be used with key-value attributes"),
                 };
                 let value_tokens = match value {
@@ -143,7 +146,7 @@ impl quote::ToTokens for Attribute {
                     .with_key_value(#key_tokens, #value_tokens)
                 });
             }
-            Attribute::KeyOnly { key } => {
+            Attribute::Key { key } => {
                 // static => with_key_value("class", key)
                 // dynamic => with_key_value("class", (key).to_string())
                 // static id => with_key_value("id", key)
@@ -156,7 +159,7 @@ impl quote::ToTokens for Attribute {
                     }
                     AttributeKey::Dynamic(expr) => {
                         tokens.extend(quote::quote! {
-                            .with_key_value("class", (#expr))
+                            .with_key_value("class", #expr)
                         });
                     }
                     AttributeKey::StaticId(name) => {
@@ -166,12 +169,12 @@ impl quote::ToTokens for Attribute {
                     }
                     AttributeKey::DynamicId(expr) => {
                         tokens.extend(quote::quote! {
-                            .with_key_value("id", (#expr))
+                            .with_key_value("id", #expr)
                         });
                     }
                 }
             }
-            Attribute::KeySpread { key } => {
+            Attribute::Spread { key } => {
                 tokens.extend(quote::quote! {
                   .with_key_values({#key}.into_iter())
                 });
