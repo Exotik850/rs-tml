@@ -1,0 +1,64 @@
+use crate::{Node, RSTMLParse, RSTMLParseExt};
+
+/// Represents an entire RSTML document.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Document<'a> {
+    pub children: Vec<Node<'a>>,
+}
+
+impl Default for Document<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'a> Document<'a> {
+    #[must_use]
+    pub fn new() -> Self {
+        Self { children: vec![] }
+    }
+
+    pub fn add_child(&mut self, child: impl Into<Node<'a>>) {
+        self.children.push(child.into());
+    }
+    #[must_use]
+    pub fn with_child(mut self, child: impl Into<Node<'a>>) -> Self {
+        self.add_child(child);
+        self
+    }
+}
+
+impl<'a> RSTMLParse<'a> for Document<'a> {
+    fn parse_no_whitespace(input: &'a str) -> crate::ParseResult<'a, Self>
+    where
+        Self: Sized,
+    {
+        let (rest, nodes) = Node::parse_many_ignoring_comments(input);
+        Ok((rest, Document { children: nodes }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::test_util::*;
+    use crate::{Document, RSTMLParse, element};
+
+    #[test]
+    fn test_document_parse() {
+        let input = r#"
+            // main content
+            div {
+                h1 { "Title" }
+                p { "This is a paragraph." }
+            }"#;
+        assert_parse_eq(
+            Document::parse_no_whitespace(input),
+            Document::new().with_child(
+                element("div")
+                    .with_child(element("h1").with_child("Title"))
+                    .with_child(element("p").with_child("This is a paragraph.")),
+            ),
+            "",
+        );
+    }
+}
