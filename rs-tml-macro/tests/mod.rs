@@ -3,7 +3,7 @@ use rs_tml_macro::rstml;
 #[test]
 fn test_empty() {
     let document = rstml! {};
-    assert!(document.children.is_empty())
+    assert!(document.is_empty())
 }
 
 #[test]
@@ -179,8 +179,30 @@ fn test_child_expand_delimited() {
         }
     };
     let expected = element("div")
-        .with_child(element("span").with_child("Child").with_child("Child"))
+        .with_child(element("span").with_child("Child"))
+        .with_child("Child")
         .into_node();
     assert_eq!(document.children.len(), 1);
     assert_eq!(document.children[0], expected);
+}
+
+#[test]
+fn test_expand_many() {
+    let names = ["Tony", "Alice", "Micheal"];
+    let items = vec![
+        element("li").with_child("Item 1"),
+        element("li").with_child("Item 2"),
+        element("li").with_child("Item 3"),
+    ];
+    let document = rstml! {
+        **names
+        **(items.clone())
+    };
+
+    let expected_children: Vec<Node> = names
+        .iter()
+        .map(|&name| Node::text(name))
+        .chain(items.into_iter().map(|item| item.into_node()))
+        .collect();
+    assert_eq!(document.children, expected_children);
 }

@@ -40,11 +40,17 @@ impl ToTokens for Element {
                 quote::quote! { .with_attribute(#attr) }
             }
         });
-        let children = self.children.iter().map(ToTokens::to_token_stream);
+        let children = self.children.iter().map(|child| {
+            if let Node::ExpandMany(many) = child {
+                quote::quote! { .with_children(#many) }
+            } else {
+                quote::quote! { .with_child(#child) }
+            }
+        });
         tokens.extend(quote::quote! {
             ::rs_tml::element::Element::new(stringify!(#name))
             #(#attrs)*
-            #(.with_child(#children))*
+            #(#children)*
         });
     }
 }

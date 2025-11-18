@@ -39,6 +39,11 @@ impl quote::ToTokens for Document {
                         .with_child({#element}.into_node())
                     });
                 }
+                Node::ExpandMany(many) => {
+                    tokens.extend(quote::quote! {
+                        .with_children({#many})
+                    });
+                }
                 other => {
                     tokens.extend(quote::quote! {
                         #other
@@ -142,6 +147,32 @@ enum Node {
     For(RSTMLFor),
     Match(RSTMLMatch),
     Expand(Expr),
+    ExpandMany(Expr),
+}
+
+impl Node {
+    fn parse_expand(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        input.parse::<Token![*]>()?;
+        if input.peek(Token![*]) {
+            input.parse::<Token![*]>()?;
+            if !input.peek(Paren) {
+                let ident: Ident = input.parse()?;
+                return Ok(Node::ExpandMany(Expr::Verbatim(ident.into_token_stream())));
+            }
+            let content;
+            syn::parenthesized!(content in input);
+            let expr = content.parse()?;
+            return Ok(Node::ExpandMany(expr));
+        }
+        if !input.peek(Paren) {
+            let ident: Ident = input.parse()?;
+            return Ok(Node::Expand(Expr::Verbatim(ident.into_token_stream())));
+        }
+        let content;
+        syn::parenthesized!(content in input);
+        let expr = content.parse()?;
+        Ok(Node::Expand(expr))
+    }
 }
 
 impl Parse for Node {
@@ -161,18 +192,7 @@ impl Parse for Node {
         if let Ok(element) = input.parse::<Element>() {
             return Ok(Node::Element(element));
         }
-        if input.peek(Token![*]) {
-            input.parse::<Token![*]>()?;
-            if !input.peek(Paren) {
-                let ident: Ident = input.parse()?;
-                return Ok(Node::Expand(Expr::Verbatim(ident.into_token_stream())));
-            }
-            let content;
-            syn::parenthesized!(content in input);
-            let expr = content.parse()?;
-            return Ok(Node::Expand(expr));
-        }
-        Err(input.error("Expected a valid RSTML node"))
+        Node::parse_expand(input)
     }
 }
 
@@ -196,6 +216,9 @@ impl quote::ToTokens for Node {
             }
             Node::Expand(expr) => tokens.extend(quote::quote! {
                 ::rs_tml::node::Node::from(#expr)
+            }),
+            Node::ExpandMany(expr) => tokens.extend(quote::quote! {
+                (#expr).into_iter().map(::rs_tml::node::Node::from)
             }),
         }
     }
