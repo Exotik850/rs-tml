@@ -1,5 +1,5 @@
 pub mod attribute;
-pub mod document;
+pub mod block;
 pub mod element;
 pub mod error;
 pub mod parse;
@@ -11,9 +11,9 @@ pub(crate) use util::test_util;
 pub(crate) use util::{nested, quote_nested};
 
 pub mod prelude {
-    use super::{attribute, document, element, error, parse, tag, text};
+    use super::{attribute, block, element, error, parse, tag, text};
     pub use attribute::Attribute;
-    pub use document::Document;
+    pub use block::Block;
     pub use element::{Element, Node, element};
     pub use error::{ParseError, ParseResult};
     pub use parse::{RSTMLParse, RSTMLParseExt};
@@ -55,6 +55,6 @@ mod tests {
                   line
                   comments should too */
                   "#;
-        assert!(dbg!(Document::parse_ignoring_comments(input)).is_ok());
+        assert!(dbg!(Block::parse_ignoring_comments(input)).is_ok());
     }
 }

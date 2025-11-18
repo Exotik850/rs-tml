@@ -44,7 +44,7 @@ impl<'a> Node<'a> {
         Node::Element(element)
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn into_node(self) -> Self {
         self
     }
@@ -208,7 +208,7 @@ impl<'a> Element<'a> {
         self
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn into_node(self) -> Node<'a> {
         Node::Element(self)
     }

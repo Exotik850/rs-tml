@@ -30,7 +30,7 @@ impl Parse for Document {
 impl quote::ToTokens for Document {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         tokens.extend(quote::quote! {
-            ::rs_tml::document::Document::new()
+            ::rs_tml::block::Block::new()
         });
         for child in &self.children {
             match child {
