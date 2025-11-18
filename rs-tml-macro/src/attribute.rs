@@ -143,40 +143,34 @@ impl quote::ToTokens for Attribute {
                     AttributeValue::Dynamic(expr) => quote::quote! { #expr },
                 };
                 tokens.extend(quote::quote! {
-                    .with_key_value(#key_tokens, #value_tokens)
+                    ::rs_tml::attribute::Attribute::new(#key_tokens, #value_tokens)
                 });
             }
-            Attribute::Key { key } => {
-                // static => with_key_value("class", key)
-                // dynamic => with_key_value("class", (key).to_string())
-                // static id => with_key_value("id", key)
-                // dynamic id => with_key_value("id", (key).to_string())
-                match key {
-                    AttributeKey::Static(name) => {
-                        tokens.extend(quote::quote! {
-                            .with_key_value("class", #name)
-                        });
-                    }
-                    AttributeKey::Dynamic(expr) => {
-                        tokens.extend(quote::quote! {
-                            .with_key_value("class", #expr)
-                        });
-                    }
-                    AttributeKey::StaticId(name) => {
-                        tokens.extend(quote::quote! {
-                            .with_key_value("id", #name)
-                        });
-                    }
-                    AttributeKey::DynamicId(expr) => {
-                        tokens.extend(quote::quote! {
-                            .with_key_value("id", #expr)
-                        });
-                    }
+            Attribute::Key { key } => match key {
+                AttributeKey::Static(name) => {
+                    tokens.extend(quote::quote! {
+                        ::rs_tml::attribute::Attribute::class(#name)
+                    });
                 }
-            }
+                AttributeKey::Dynamic(expr) => {
+                    tokens.extend(quote::quote! {
+                        ::rs_tml::attribute::Attribute::class(#expr)
+                    });
+                }
+                AttributeKey::StaticId(name) => {
+                    tokens.extend(quote::quote! {
+                        ::rs_tml::attribute::Attribute::id(#name)
+                    });
+                }
+                AttributeKey::DynamicId(expr) => {
+                    tokens.extend(quote::quote! {
+                        ::rs_tml::attribute::Attribute::id(#expr)
+                    });
+                }
+            },
             Attribute::Spread { key } => {
                 tokens.extend(quote::quote! {
-                  .with_key_values({#key}.into_iter())
+                    {#key}.into_iter().map(Into::into)
                 });
             }
         }

@@ -157,6 +157,22 @@ impl<'a> Element<'a> {
         self.add_attribute(attribute);
         self
     }
+    pub fn add_attributes<I>(&mut self, attributes: I)
+    where
+        I: IntoIterator<Item = Attribute<'a>>,
+    {
+        for attribute in attributes {
+            self.add_attribute(attribute);
+        }
+    }
+    #[must_use]
+    pub fn with_attributes<I>(mut self, attributes: I) -> Self
+    where
+        I: IntoIterator<Item = Attribute<'a>>,
+    {
+        self.add_attributes(attributes);
+        self
+    }
 
     pub fn add_key_value(&mut self, key: impl Into<Cow<'a, str>>, value: impl Into<Cow<'a, str>>) {
         self.add_attribute(Attribute::new(key, value));

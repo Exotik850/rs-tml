@@ -33,12 +33,18 @@ impl syn::parse::Parse for Element {
 impl ToTokens for Element {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let name = &self.name;
-        let attrs = self.attributes.iter().map(ToTokens::to_token_stream);
+        let attrs = self.attributes.iter().map(|attr| {
+            if let attr @ Attribute::Spread { .. } = attr {
+                quote::quote! { .with_attributes(#attr) }
+            } else {
+                quote::quote! { .with_attribute(#attr) }
+            }
+        });
         let children = self.children.iter().map(ToTokens::to_token_stream);
         tokens.extend(quote::quote! {
             ::rs_tml::element::Element::new(stringify!(#name))
             #(#attrs)*
-            #(.with_child({#children}))*
+            #(.with_child(#children))*
         });
     }
 }
