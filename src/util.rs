@@ -25,36 +25,36 @@ pub fn nested<'a>(
 
     let input = &input[start.len()..];
     let mut depth = 1;
-    let mut i = 0;
 
-    // TODO: Optimize this to avoid searching every byte
-    while i < input.len() {
-        // Check for escape character
-        if i > 0 && &input[i - 1..i] == "\\" {
-            i += 1;
+    let mut search_offset = 0;
+    while let Some(next_delim_pos) = input[search_offset..]
+        .find(start)
+        .map(|p| (p, true))
+        .into_iter()
+        .chain(input[search_offset..].find(end).map(|p| (p, false)))
+        .min_by_key(|&(p, _)| p)
+    {
+        let (relative_pos, is_start_delim) = next_delim_pos;
+        search_offset += relative_pos;
+
+        // Check for escape character. If found, skip this delimiter and continue searching.
+        if search_offset > 0 && input.as_bytes()[search_offset - 1] == b'\\' {
+            search_offset += 1;
             continue;
         }
 
-        // Check for start delimiter
-        if input[i..].starts_with(start) {
+        if is_start_delim {
             depth += 1;
-            i += start.len();
-            continue;
-        }
-
-        // Check for end delimiter
-        if input[i..].starts_with(end) {
+            search_offset += start.len();
+        } else {
             depth -= 1;
             if depth == 0 {
-                let content = &input[..i];
-                let rest = &input[i + end.len()..];
+                let content = &input[..search_offset];
+                let rest = &input[search_offset + end.len()..];
                 return Ok((rest, content));
             }
-            i += end.len();
-            continue;
+            search_offset += end.len();
         }
-
-        i += 1;
     }
 
     Err(ParseError::missing_delimiter(end, input))
