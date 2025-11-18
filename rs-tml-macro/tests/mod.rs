@@ -225,3 +225,38 @@ fn test_expand_document() {
     assert_eq!(document.children.len(), 1);
     assert_eq!(document.children[0], expected);
 }
+
+#[test]
+fn test_complex_document() {
+    let items = vec!["Item 1", "Item 2", "Item 3"];
+    let is_logged_in = true;
+    let username = "Alice";
+    let document = rstml! {
+        div {
+            if is_logged_in {
+                h2 { "Welcome, {username}!" }
+            } else {
+                h2 { "Welcome, Guest!" }
+            }
+            ul {
+                for item in items.iter().copied() {
+                    li { "{item}" }
+                }
+            }
+        }
+    };
+    let mut expected_div = element("div");
+    if is_logged_in {
+        expected_div.add_child(element("h2").with_child(format!("Welcome, {}!", username)));
+    } else {
+        expected_div.add_child(element("h2").with_child("Welcome, Guest!"));
+    }
+    let mut ul_element = element("ul");
+    for item in &items {
+        ul_element.add_child(element("li").with_child(*item));
+    }
+    expected_div.add_child(ul_element);
+    let expected = expected_div.into_node();
+    assert_eq!(document.children.len(), 1);
+    assert_eq!(document.children[0], expected);
+}
