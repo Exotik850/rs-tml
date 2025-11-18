@@ -46,7 +46,7 @@ impl std::fmt::Debug for Text<'_> {
 
 impl<'a> RSTMLParse<'a> for Text<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
-        let (rest, content) = crate::quote_nested(input)?;
+        let (rest, content) = crate::util::quote_nested(input)?;
         Ok((rest, Text::new(content)))
     }
 }

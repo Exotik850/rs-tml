@@ -134,7 +134,7 @@ impl<'a> RSTMLParse<'a> for Element<'a> {
     fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self> {
         let (rest, name) = Tag::parse_no_whitespace(input)?;
         let rest = consume_comments(rest);
-        let (rest_out, content) = crate::nested(rest, "{", "}")?;
+        let (rest_out, content) = crate::util::nested(rest, "{", "}")?;
         let rest = consume_comments(content);
 
         let (mut rest, attributes) = Attribute::parse_many_ignoring_comments(rest);

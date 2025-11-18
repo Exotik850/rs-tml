@@ -108,7 +108,7 @@ impl<'a> RSTMLParse<'a> for Attribute<'a> {
             return get_attribute_key(input).map(|(rest, key)| (rest, Attribute::class(key)));
         };
         let (_, key) = get_attribute_key(key.trim_end())?;
-        let (rest, value) = crate::quote_nested(rest.trim_start())?;
+        let (rest, value) = crate::util::quote_nested(rest.trim_start())?;
         Ok((rest, Attribute::new(key, value)))
     }
 }
