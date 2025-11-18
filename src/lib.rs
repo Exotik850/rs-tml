@@ -2,6 +2,7 @@ pub mod attribute;
 pub mod block;
 pub mod element;
 pub mod error;
+pub mod node;
 pub mod parse;
 pub mod tag;
 pub mod text;
@@ -11,11 +12,12 @@ pub(crate) use util::test_util;
 pub(crate) use util::{nested, quote_nested};
 
 pub mod prelude {
-    use super::{attribute, block, element, error, parse, tag, text};
+    use super::{attribute, block, element, error, node, parse, tag, text};
     pub use attribute::Attribute;
     pub use block::Block;
-    pub use element::{Element, Node, element};
+    pub use element::{Element, element};
     pub use error::{ParseError, ParseResult};
+    pub use node::Node;
     pub use parse::{RSTMLParse, RSTMLParseExt};
     pub use tag::Tag;
     pub use text::Text;

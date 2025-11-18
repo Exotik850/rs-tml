@@ -1,4 +1,4 @@
-use rs_tml::element::{Node, element};
+use rs_tml::prelude::*;
 use rs_tml_macro::rstml;
 #[test]
 fn test_empty() {

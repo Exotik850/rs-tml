@@ -123,12 +123,12 @@ impl quote::ToTokens for TextNode {
         match self {
             TextNode::Literal(lit) => {
                 tokens.extend(quote::quote! {
-                    ::rs_tml::element::Node::text(#lit)
+                    ::rs_tml::node::Node::text(#lit)
                 });
             }
             TextNode::Dynamic(lit) => {
                 tokens.extend(quote::quote! {
-                    ::rs_tml::element::Node::text(format!(#lit))
+                    ::rs_tml::node::Node::text(format!(#lit))
                 });
             }
         }
