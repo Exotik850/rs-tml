@@ -58,6 +58,18 @@ impl<'a> Block<'a> {
     pub fn into_nodes(self) -> Vec<Node<'a>> {
         self.children
     }
+    pub fn iter_nodes(&self) -> impl Iterator<Item = &Node<'a>> {
+        self.children.iter()
+    }
+}
+
+impl<'a> IntoIterator for Block<'a> {
+    type Item = Node<'a>;
+    type IntoIter = std::vec::IntoIter<Node<'a>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.children.into_iter()
+    }
 }
 
 impl<'a> RSTMLParse<'a> for Block<'a> {

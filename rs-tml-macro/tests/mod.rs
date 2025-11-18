@@ -206,3 +206,22 @@ fn test_expand_many() {
         .collect();
     assert_eq!(document.children, expected_children);
 }
+
+#[test]
+fn test_expand_document() {
+    let sub_document = rstml! {
+        div {
+            p { "Sub Document" }
+        }
+    };
+    let document = rstml! {
+        section {
+            **sub_document
+        }
+    };
+    let expected = element("section")
+        .with_child(element("div").with_child(element("p").with_child("Sub Document")))
+        .into_node();
+    assert_eq!(document.children.len(), 1);
+    assert_eq!(document.children[0], expected);
+}
