@@ -195,7 +195,7 @@ impl quote::ToTokens for Node {
                 match_block.to_tokens(tokens);
             }
             Node::Expand(expr) => tokens.extend(quote::quote! {
-                #expr.into_node()
+                ::rs_tml::node::Node::from(#expr)
             }),
         }
     }

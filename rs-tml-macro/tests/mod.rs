@@ -174,7 +174,8 @@ fn test_child_expand_delimited() {
     let child = element("span").with_child("Child");
     let document = rstml! {
         div {
-            *(child.with_child("Child"))
+            *(child)
+            *("Child")
         }
     };
     let expected = element("div")
