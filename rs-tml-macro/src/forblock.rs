@@ -29,9 +29,9 @@ impl quote::ToTokens for RSTMLFor {
         let iterable = &self.iterable;
         let body = &self.body;
         tokens.extend(quote::quote! {
-          .with_children((#iterable).into_iter().map(|#pattern| {
+          (#iterable).into_iter().map(|#pattern| {
               #body
-          }))
+          })
         });
     }
 }

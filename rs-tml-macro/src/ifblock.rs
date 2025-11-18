@@ -89,7 +89,7 @@ impl RSTMLIf {
         // conditionally add a child without requiring an else branch from the user.
         out.extend(quote::quote! {
             #if_token #condition {
-                Some({ #then }.into_node())
+                Some(Node::from(#then))
             }
         });
 
@@ -99,14 +99,14 @@ impl RSTMLIf {
         } else if let Some((else_token, else_blk)) = else_block {
             // If an explicit else block exists, return Some(node) for it.
             out.extend(quote::quote! {
-                #else_token {
-                    Some({ #else_blk }.into_node())
+                 #else_token {
+                    Some(Node::from(#else_blk))
                 }
             });
         } else {
             // No else provided by the user; default to None so the Option compiles.
             out.extend(quote::quote! {
-                else { None }
+                 else { None }
             });
         }
     }
@@ -145,11 +145,6 @@ impl Parse for RSTMLIf {
 
 impl quote::ToTokens for RSTMLIf {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let mut body = proc_macro2::TokenStream::new();
-        self.build_chain(&mut body);
-        // Use with_children with an Option iterator to add the child only when present.
-        tokens.extend(quote::quote! {
-            .with_children({ #body }.into_iter())
-        });
+        self.build_chain(tokens);
     }
 }

@@ -106,6 +106,24 @@ pub enum Attribute {
     },
 }
 
+impl Attribute {
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Attribute::Spread { .. })
+    }
+
+    pub fn to_child_tokens(&self) -> proc_macro2::TokenStream {
+        if self.is_spread() {
+            quote::quote! {
+                .with_attributes(#self)
+            }
+        } else {
+            quote::quote! {
+                .with_attribute(#self)
+            }
+        }
+    }
+}
+
 impl Parse for Attribute {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         // if there are two consecutive dots, it's a key spread

@@ -88,9 +88,9 @@ impl quote::ToTokens for RSTMLMatch {
             }
         });
         tokens.extend(quote::quote! {
-            .with_child(#match_token #expr {
+            #match_token #expr {
                 #(#arms),*
-            })
+            }
         });
     }
 }

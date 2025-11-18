@@ -32,25 +32,7 @@ impl quote::ToTokens for Document {
         tokens.extend(quote::quote! {
             ::rs_tml::block::Block::new()
         });
-        for child in &self.children {
-            match child {
-                Node::Element(element) => {
-                    tokens.extend(quote::quote! {
-                        .with_child({#element}.into_node())
-                    });
-                }
-                Node::ExpandMany(many) => {
-                    tokens.extend(quote::quote! {
-                        .with_children({#many})
-                    });
-                }
-                other => {
-                    tokens.extend(quote::quote! {
-                        #other
-                    });
-                }
-            }
-        }
+        tokens.extend(self.children.iter().map(Node::to_child_tokens));
     }
 }
 
@@ -146,8 +128,8 @@ enum Node {
     If(RSTMLIf),
     For(RSTMLFor),
     Match(RSTMLMatch),
-    Expand(Expr),
-    ExpandMany(Expr),
+    Expand(Box<Expr>),
+    ExpandMany(Box<Expr>),
 }
 
 impl Node {
@@ -157,7 +139,9 @@ impl Node {
             input.parse::<Token![*]>()?;
             if !input.peek(Paren) {
                 let ident: Ident = input.parse()?;
-                return Ok(Node::ExpandMany(Expr::Verbatim(ident.into_token_stream())));
+                return Ok(Node::ExpandMany(
+                    Expr::Verbatim(ident.into_token_stream()).into(),
+                ));
             }
             let content;
             syn::parenthesized!(content in input);
@@ -166,12 +150,30 @@ impl Node {
         }
         if !input.peek(Paren) {
             let ident: Ident = input.parse()?;
-            return Ok(Node::Expand(Expr::Verbatim(ident.into_token_stream())));
+            return Ok(Node::Expand(
+                Expr::Verbatim(ident.into_token_stream()).into(),
+            ));
         }
         let content;
         syn::parenthesized!(content in input);
         let expr = content.parse()?;
         Ok(Node::Expand(expr))
+    }
+
+    fn is_iterator_expand(&self) -> bool {
+        matches!(self, Node::ExpandMany(_) | Node::For(_) | Node::If(_))
+    }
+
+    fn to_child_tokens(&self) -> proc_macro2::TokenStream {
+        if self.is_iterator_expand() {
+            quote::quote! {
+                .with_children(#self)
+            }
+        } else {
+            quote::quote! {
+                .with_child(#self)
+            }
+        }
     }
 }
 
@@ -230,41 +232,3 @@ pub fn rstml(input: TokenStream) -> TokenStream {
     let document = syn::parse_macro_input!(input as Document);
     document.into_token_stream().into()
 }
-
-// // these all expand to valid code
-// // attributes
-// .attr = if expr { // match as well
-//    "something"
-//  } [else { "something else" }]
-
-// // variable for attr name
-// .*name = "Tony"
-// .*(expr) = "Runtime name {expr}" // format!
-// // expand (T: Display, U: Display) iterator
-// ..*attrs
-// ..*(expr)
-
-// // match statement
-// match expr {
-//    Some(field) [if expr] => { // [expr] means optional
-//       p { "{field}" }
-//    }
-//    None => p { "nothing" }
-// }
-
-// // conditional
-// if condition {
-//    h1 { "True!" }
-// } [else if other_condition {
-//    h1 { "Else if!" }
-// }] [else {
-//    h1 { "False!" }
-// }]
-
-// // iterators
-// for (i, name) in names.iter().enumerate() {
-//    p { "{i}: {name}" }
-// }
-
-// // expand another call
-// *child
