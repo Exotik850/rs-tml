@@ -36,6 +36,9 @@ impl<'a> Element<'a> {
         Self::new_const(name.into())
     }
 
+    /// Adds a child node to the element.
+    ///
+    /// If the child is a Block, its children are flattened into the element's children.
     pub fn add_child(&mut self, child: impl Into<Node<'a>>) {
         self.children.push(child.into());
     }

@@ -55,8 +55,7 @@ mod tests {
                // comments should work
                /* multi
                   line
-                  comments should too */
-                  "#;
+                  comments should too */"#;
         assert!(dbg!(Block::parse_ignoring_comments(input)).is_ok());
     }
 }

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// Represents an entire RSTML document.
+/// Represents a block of RSTML nodes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Block<'a> {
     pub children: Vec<Node<'a>>,
@@ -61,12 +61,21 @@ impl<'a> Block<'a> {
 }
 
 impl<'a> RSTMLParse<'a> for Block<'a> {
-    fn parse_no_whitespace(input: &'a str) -> ParseResult<'a, Self>
+    fn parse_no_whitespace(mut input: &'a str) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        let (rest, children) = Node::parse_many_ignoring_comments(input);
-        Ok((rest, Block { children }))
+        let mut children = Vec::new();
+
+        while !input.is_empty() {
+            let Ok((rest, node)) = Node::parse_no_whitespace(input) else {
+                break;
+            };
+            children.push(node);
+            input = rest;
+        }
+
+        Ok((input, Block { children }))
     }
 }
 
