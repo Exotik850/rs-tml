@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::ToTokens;
-use syn::{LitStr, parse::Parse};
+use syn::{Expr, Ident, LitStr, Token, parse::Parse, token::Paren};
 
 mod attribute;
 use attribute::Attribute;
@@ -141,7 +141,7 @@ enum Node {
     If(RSTMLIf),
     For(RSTMLFor),
     Match(RSTMLMatch),
-    // Expand(Expr),
+    Expand(Expr),
 }
 
 impl Parse for Node {
@@ -161,11 +161,17 @@ impl Parse for Node {
         if let Ok(element) = input.parse::<Element>() {
             return Ok(Node::Element(element));
         }
-        // if input.peek(Token![*]) {
-        //     input.parse::<Token![*]>()?;
-        //     let expand: Expr = input.parse()?;
-        //     return Ok(Node::Expand(expand));
-        // }
+        if input.peek(Token![*]) {
+            input.parse::<Token![*]>()?;
+            if !input.peek(Paren) {
+                let ident: Ident = input.parse()?;
+                return Ok(Node::Expand(Expr::Verbatim(ident.into_token_stream())));
+            }
+            let content;
+            syn::parenthesized!(content in input);
+            let expr = content.parse()?;
+            return Ok(Node::Expand(expr));
+        }
         Err(input.error("Expected a valid RSTML node"))
     }
 }
@@ -187,7 +193,10 @@ impl quote::ToTokens for Node {
             }
             Node::Match(match_block) => {
                 match_block.to_tokens(tokens);
-            } // Node::Expand(expr) => expr.to_tokens(tokens),
+            }
+            Node::Expand(expr) => tokens.extend(quote::quote! {
+                #expr.into_node()
+            }),
         }
     }
 }

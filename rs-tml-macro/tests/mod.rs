@@ -153,3 +153,33 @@ fn test_dynamic_attribute_value() {
     assert_eq!(document.children.len(), 1);
     assert_eq!(document.children[0], expected);
 }
+
+#[test]
+fn test_child_expand() {
+    let child = element("span").with_child("Child");
+    let document = rstml! {
+        div {
+            *child
+        }
+    };
+    let expected = element("div")
+        .with_child(element("span").with_child("Child"))
+        .into_node();
+    assert_eq!(document.children.len(), 1);
+    assert_eq!(document.children[0], expected);
+}
+
+#[test]
+fn test_child_expand_delimited() {
+    let child = element("span").with_child("Child");
+    let document = rstml! {
+        div {
+            *(child.with_child("Child"))
+        }
+    };
+    let expected = element("div")
+        .with_child(element("span").with_child("Child").with_child("Child"))
+        .into_node();
+    assert_eq!(document.children.len(), 1);
+    assert_eq!(document.children[0], expected);
+}
