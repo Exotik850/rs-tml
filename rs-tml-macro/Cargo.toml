@@ -5,9 +5,9 @@ edition = "2024"
 
 [dependencies]
 pastey = "0.1"
-proc-macro2 = "1.0"
-quote = "1.0"
-syn = {version = "2.0", features = ["full", "parsing"]}
+proc-macro2 = { version = "1.0", default-features = false }
+quote = { version = "1.0", default-features = false }
+syn = { version = "2.0", features = ["full", "parsing", "printing", "proc-macro"], default-features = false }
 rs-tml = { version = "0.1.0", path = "../" }
 
 [lib]
