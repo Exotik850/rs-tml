@@ -135,16 +135,36 @@ impl<'a> RSTMLParse<'a> for Element<'a> {
         let (rest, name) = Tag::parse_no_whitespace(input)?;
         let rest = consume_comments(rest);
         let (rest_out, content) = crate::util::nested(rest, "{", "}")?;
-        let rest = consume_comments(content);
+        let mut rest = content;
 
-        let (mut rest, attributes) = Attribute::parse_many_ignoring_comments(rest);
-        rest = consume_comments(rest);
+        let mut attributes = Vec::new();
+        let mut children = Vec::new();
 
-        let (rest, children) = Node::parse_many_ignoring_comments(rest);
-        if !consume_comments(rest).is_empty() {
+        // Parse attributes and children in an interleaved manner
+        while !rest.is_empty() {
+            rest = consume_comments(rest);
+            if rest.is_empty() {
+                break;
+            }
+
+            // Try to parse an attribute first
+            if let Ok((new_rest, attr)) = Attribute::parse_ignoring_comments(rest) {
+                attributes.push(attr);
+                rest = new_rest;
+                continue;
+            }
+
+            // If attribute parsing fails, try to parse a node (child)
+            if let Ok((new_rest, node)) = Node::parse_ignoring_comments(rest) {
+                children.push(node);
+                rest = new_rest;
+                continue;
+            }
+
+            // If neither works, we have unexpected content
             return Err(ParseError::invalid_input(
                 rest,
-                Some("Unexpected content after element children".into()),
+                Some("Unexpected content in element".into()),
             ));
         }
 
