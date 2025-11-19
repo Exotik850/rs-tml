@@ -128,6 +128,50 @@ impl<'a> Element<'a> {
     pub fn into_node(self) -> Node<'a> {
         Node::Element(self)
     }
+
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:indent$}{}", "", self.name)?;
+        write!(f, " {{")?;
+        let mut attributes: Vec<_> = self.attributes.iter().collect();
+        // sort attributes to have ids, classes, then the rest sorted alphabetically
+        attributes.sort_by(|a, b| {
+            let a_key = match a.key.as_ref() {
+                "id" => 0,
+                "class" => 1,
+                _ => 2,
+            };
+            let b_key = match b.key.as_ref() {
+                "id" => 0,
+                "class" => 1,
+                _ => 2,
+            };
+            if a_key == b_key {
+                a.key.cmp(&b.key)
+            } else {
+                a_key.cmp(&b_key)
+            }
+        });
+        if !self.attributes.is_empty() {
+            for attribute in attributes {
+                writeln!(f)?;
+                attribute.pretty_print(indent + 4, f)?;
+            }
+        }
+        for child in &self.children {
+            writeln!(f)?;
+            child.pretty_print(indent + 4, f)?;
+        }
+        if !self.attributes.is_empty() || !self.children.is_empty() {
+            writeln!(f)?;
+        }
+        write!(f, "{:indent$}}}", "",)
+    }
+}
+
+impl std::fmt::Display for Element<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.pretty_print(0, f)
+    }
 }
 
 impl<'a> RSTMLParse<'a> for Element<'a> {

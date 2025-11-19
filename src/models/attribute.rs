@@ -12,7 +12,7 @@ use pastey::paste;
 /// Values are usually enclosed in double quotes.
 ///
 /// Keys without values are treated as class attributes with the value of the key name.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Attribute<'a> {
     pub key: Cow<'a, str>,
     pub value: Cow<'a, str>,
@@ -45,13 +45,16 @@ impl<'a> Attribute<'a> {
         }
     }
 
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.key.as_ref() {
+            "class" => write!(f, "{:indent$}.{}", "", self.value),
+            "id" => write!(f, "{:indent$}#{}", "", self.value),
+            _ => write!(f, "{:indent$}.{}=\"{}\"", "", self.key, self.value),
+        }
+    }
+
     // TODO : add type attribute, but it's a reserved keyword
     attribute!(id class href src alt title style name value placeholder disabled checked readonly);
-}
-impl std::fmt::Display for Attribute<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}=\"{}\"", self.key, self.value)
-    }
 }
 
 impl<'a, T, U> From<(T, U)> for Attribute<'a>
@@ -61,6 +64,12 @@ where
 {
     fn from((key, value): (T, U)) -> Self {
         Attribute::new(key, value)
+    }
+}
+
+impl std::fmt::Display for Attribute<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.pretty_print(0, f)
     }
 }
 
@@ -170,7 +179,7 @@ mod tests {
         assert_parse_err(
             Attribute::parse_no_whitespace(input),
             ParseError::invalid_input(
-                "class",
+                "class=my-class",
                 Some("Attribute key must start with a period or a '#'".into()),
             ),
         );

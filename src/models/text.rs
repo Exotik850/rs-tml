@@ -18,6 +18,10 @@ impl<'a> Text<'a> {
     pub fn new(content: impl Into<Cow<'a, str>>) -> Self {
         Self::new_const(content.into())
     }
+
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:indent$}\"{}\"", "", self.content)
+    }
 }
 
 impl From<String> for Text<'_> {
@@ -34,7 +38,7 @@ impl<'a> From<&'a str> for Text<'a> {
 
 impl std::fmt::Display for Text<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.content)
+        self.pretty_print(0, f)
     }
 }
 

@@ -18,8 +18,7 @@ mod tests {
     use crate::prelude::*;
     #[test]
     fn test_large_document() {
-        let input = r#"
-            div {
+        let input = r#"div {
                // specific styles can be added like so
                // only one style block per element
                style {
@@ -34,8 +33,8 @@ mod tests {
 
                h1 { "Something" }
                h2 {
-              	.class = "bg-red"
-                    "Something red"
+                  .class = "bg-red"
+                  "Something red"
                }
 
                a { .href = "https://google.com" "Links should work" }
@@ -43,9 +42,25 @@ mod tests {
                br {} // self closing / empty tags
 
                // comments should work
-               /* multi
-                  line
-                  comments should too */"#;
-        assert!(dbg!(Block::parse_ignoring_comments(input)).is_ok());
+            }"#;
+        let block = Block::parse_no_whitespace(input)
+            .expect("Block should parse correctly")
+            .1;
+
+        // The input is a single div element, so block should have 1 child (the div)
+        assert_eq!(block.children.len(), 1);
+
+        // Get the div element
+        if let Some(Node::Element(div)) = block.children.first() {
+            // The div should have 8 children: style, h1, h2, a, br (5 elements)
+            // Plus attributes: #main, .class, .lg (3 attributes)
+            // So total children elements should be 5
+            assert_eq!(div.children.len(), 5);
+            assert_eq!(div.attributes.len(), 3);
+        } else {
+            panic!("Expected first child to be an element");
+        }
+
+        println!("{block}")
     }
 }

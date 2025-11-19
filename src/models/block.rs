@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{parse::consume_comments, prelude::*};
 
 /// Represents a block of RSTML nodes.
 #[derive(Debug, Clone, PartialEq)]
@@ -61,6 +61,13 @@ impl<'a> Block<'a> {
     pub fn iter_nodes(&self) -> impl Iterator<Item = &Node<'a>> {
         self.children.iter()
     }
+
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for child in &self.children {
+            child.pretty_print(indent, f)?;
+        }
+        Ok(())
+    }
 }
 
 impl<'a> IntoIterator for Block<'a> {
@@ -69,6 +76,12 @@ impl<'a> IntoIterator for Block<'a> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.children.into_iter()
+    }
+}
+
+impl std::fmt::Display for Block<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.pretty_print(0, f)
     }
 }
 
@@ -84,7 +97,7 @@ impl<'a> RSTMLParse<'a> for Block<'a> {
                 break;
             };
             children.push(node);
-            input = rest;
+            input = consume_comments(rest);
         }
 
         Ok((input, Block { children }))

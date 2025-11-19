@@ -9,6 +9,12 @@ pub enum Node<'a> {
     Element(Element<'a>),
 }
 
+impl std::fmt::Display for Node<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.pretty_print(0, f)
+    }
+}
+
 impl std::fmt::Debug for Node<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -61,6 +67,13 @@ impl<'a> Node<'a> {
     #[must_use]
     pub fn into_node(self) -> Self {
         self
+    }
+
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Node::Text(text) => text.pretty_print(indent, f),
+            Node::Element(element) => element.pretty_print(indent, f),
+        }
     }
 }
 
