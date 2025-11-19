@@ -102,14 +102,19 @@ impl<'a> RSTMLParse<'a> for Attribute<'a> {
             return Ok((rest, Attribute::id(id.name)));
         }
 
-        let Some((key, rest)) = input.split_once('=') else {
-            // Handle case where attribute has no value, treat as class with value of key name
-            // e.g., .class becomes .class="class"
-            return get_attribute_key(input).map(|(rest, key)| (rest, Attribute::class(key)));
-        };
-        let (_, key) = get_attribute_key(key.trim_end())?;
-        let (rest, value) = crate::util::quote_nested(rest.trim_start())?;
-        Ok((rest, Attribute::new(key, value)))
+        // First, extract the key part (everything before '=' or end of attribute)
+        let (key_rest, key_str) = get_attribute_key(input)?;
+
+        // Check if there's an '=' immediately after the key (with optional whitespace)
+        let trimmed_rest = key_rest.trim_start();
+        if let Some(rest_after_eq) = trimmed_rest.strip_prefix('=') {
+            // Parse the value after '='
+            let (rest, value) = crate::util::quote_nested(rest_after_eq.trim_start())?;
+            Ok((rest, Attribute::new(key_str, value)))
+        } else {
+            // No '=' found, treat as class shorthand
+            Ok((key_rest, Attribute::class(key_str)))
+        }
     }
 }
 
